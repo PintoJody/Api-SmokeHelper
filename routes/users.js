@@ -128,6 +128,14 @@ router.post("/login", async (req, res) => {
       },
     },
     {
+      $lookup: {
+        from: "badges",
+        localField: "badges",
+        foreignField: "_id",
+        as: "badges",
+      },
+    },
+    {
       $project: {
         username: 1,
         slug: 1,

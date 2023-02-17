@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const validator = require("validator");
 
-const UserModel = mongoose.Schema({
+const BadgeModel = mongoose.Schema({
   createdAt: {
     type: Date,
     required: true,
@@ -35,11 +35,8 @@ const UserModel = mongoose.Schema({
   },
 });
 
-UserModel.statics.isEmailTaken = async function (email) {
-  return await this.findOne({ email: email.trim() });
-};
-UserModel.statics.isUsernameTaken = async function (username) {
-  return await this.findOne({ username: username.trim() });
+BadgeModel.statics.isTitleTaken = async function (title) {
+  return await this.findOne({ title: title.trim() });
 };
 
-module.exports = user = mongoose.model("users", UserModel);
+module.exports = user = mongoose.model("badges", BadgeModel);
