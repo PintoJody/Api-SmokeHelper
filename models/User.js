@@ -63,11 +63,11 @@ const UserModel = mongoose.Schema({
     required: true,
     default: false,
   },
-  badges: {
-    type: Array,
-    required: true,
-    default: [],
-  },
+  badges: [
+    {
+      type: ObjectId,
+    },
+  ],
   featuredBadge: {
     type: ObjectId,
     required: false,

@@ -31,11 +31,23 @@ router.get("/", (req, res) => {
   });
 });
 
-router.get("/:id", (req, res) => {
-  UserModel.findById(req.params.id).then((data, err) => {
-    if (!err) res.send(data);
-    else console.log("Could not get data : " + err);
-  });
+router.get("/:slug", async (req, res) => {
+  let data = {};
+  const user = await UserModel.aggregate([
+    {
+      $match: { slug: { $eq: req.params.slug } },
+    },
+    {
+      $project: {
+        username: 1,
+        badges: 1,
+        createdAt: 1,
+        banned: 1,
+      },
+    },
+  ]);
+  if (user[0]) res.send(user[0]);
+  else res.status(400).send("Aucun utilisateur trouvé.");
 });
 
 router.post("/register/step1", async (req, res) => {
@@ -89,7 +101,6 @@ router.post("/register/step1", async (req, res) => {
     errors.password = "Veuillez entrer entre 8 et 50 caractères.";
   }
 
-  console.log(errors);
   if (Object.keys(errors).length !== 0) {
     res.status(400).send(errors);
     return;

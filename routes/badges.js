@@ -22,11 +22,12 @@ router.get("/:id", (req, res) => {
   });
 });
 
-router.get("/user/:id", async (req, res) => {
-  const id = new ObjectId(req.params.id);
+router.get("/user/:slug", async (req, res) => {
+  // const idOrSlug = req.params.idOrSlug;
+  const slug = req.params.slug;
   const user = await UserModel.aggregate([
     {
-      $match: { _id: { $eq: id } },
+      $match: { slug: { $eq: slug } },
     },
     {
       $lookup: {
@@ -42,7 +43,8 @@ router.get("/user/:id", async (req, res) => {
       },
     },
   ]);
-  res.send(user[0].badges);
+  if (user[0]) res.send(user[0].badges);
+  else res.status(400).send("Aucun utilisateur trouvé.");
 });
 
 router.post("/create", async (req, res) => {
@@ -109,7 +111,7 @@ router.put("/:id", (req, res) => {
 // delete
 router.delete("/:id", (req, res) => {
   if (!objectId.isValid(req.params.id))
-    return res.status(400).send("ID unknow ! " + req.params.id);
+    return res.status(400).send("ID unknown ! " + req.params.id);
 
   BadgeModel.findByIdAndRemove(req.params.id, (err, docs) => {
     if (!err) res.send(docs);
