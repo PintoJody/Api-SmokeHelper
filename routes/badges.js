@@ -6,7 +6,6 @@ const BadgeModel = require("../models/Badge");
 const UserModel = require("../models/User");
 
 var slug = require("slug");
-const { ObjectId } = require("mongodb");
 
 router.get("/", (req, res) => {
   BadgeModel.find((err, docs) => {

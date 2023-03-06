@@ -25,6 +25,7 @@ function makeToken(length) {
   return result;
 }
 
+// GET ALL USERS
 router.get("/", (req, res) => {
   UserModel.find((err, docs) => {
     if (!err) res.send(docs);
@@ -32,6 +33,7 @@ router.get("/", (req, res) => {
   });
 });
 
+// GET 1 USER WITH SLUG
 router.get("/:slug", async (req, res) => {
   let data = {};
   const user = await UserModel.aggregate([
@@ -59,6 +61,7 @@ router.get("/:slug", async (req, res) => {
   else res.status(400).send("Aucun utilisateur trouvé.");
 });
 
+//REGISTER
 router.post("/register/step1", async (req, res) => {
   req.fields.slug = slug(req.fields.username);
   req.fields.mentorToken = req.fields.slug + makeToken(30);
@@ -162,6 +165,7 @@ router.post("/register/step1", async (req, res) => {
   });
 });
 
+// LOGIN
 router.post("/login", async (req, res) => {
   const user = await UserModel.aggregate([
     //   check if email or username exists
@@ -217,6 +221,7 @@ router.post("/login", async (req, res) => {
   } else res.status(400).send("Aucun utilisateur trouvé.");
 });
 
+// CONFIRM MAIL
 router.post("/confirmMail/:token", async (req, res) => {
   if (!req.fields.userId || !objectId.isValid(req.fields.userId)) {
     res.status(400).send("Aucun utilisateur spécifié ou ID invalide.");
@@ -233,7 +238,9 @@ router.post("/confirmMail/:token", async (req, res) => {
       confirmed: false,
       confirmationToken: token,
     },
-    { $set: { confirmed: true, confirmationToken: null } }
+    {
+      $set: { confirmed: true, confirmationToken: null, updatedAt: new Date() },
+    }
   );
   if (!userFound) {
     res.status(400).send("Aucun utilisateur trouvé.");
@@ -241,7 +248,7 @@ router.post("/confirmMail/:token", async (req, res) => {
   res.status(200).send({ status: "success", data: userFound });
 });
 
-// update
+// UPDATE
 router.put("/:id", (req, res) => {
   if (!objectId.isValid(req.params.id))
     return res.status(400).send("ID unknown : " + req.params.id);
@@ -259,7 +266,7 @@ router.put("/:id", (req, res) => {
   );
 });
 
-// delete
+// DELETE
 router.delete("/:id", (req, res) => {
   if (!objectId.isValid(req.params.id))
     return res.status(400).send("ID unknow ! " + req.params.id);
@@ -270,4 +277,24 @@ router.delete("/:id", (req, res) => {
   });
 });
 
+// ADD BADGE TO USER
+router.post("/addBadgeTo/:userId", async (req, res) => {
+  if (!req.params.userId || !objectId.isValid(req.params.userId)) {
+    res.status(400).send("Aucun utilisateur spécifié ou ID invalide.");
+  }
+  if (!req.fields.badge || !objectId.isValid(req.fields.badge)) {
+    res.status(400).send("Aucun badge spécifié ou ID invalide.");
+  }
+  // res.send(req)
+  const badge = req.fields.badge;
+  const userId = objectId(req.params.userId);
+
+  const userFound = await UserModel.findOneAndUpdate(
+    {
+      _id: userId,
+    },
+    { $push: { badges: { badge: badge } }, $set: { updatedAt: new Date() } }
+  );
+  res.send(userFound);
+});
 module.exports = router;

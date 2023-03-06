@@ -32,6 +32,7 @@ const BadgeModel = mongoose.Schema({
     type: String,
     required: true,
     trim: true,
+    default: "default",
   },
 });
 
@@ -39,4 +40,4 @@ BadgeModel.statics.isTitleTaken = async function (title) {
   return await this.findOne({ title: title.trim() });
 };
 
-module.exports = user = mongoose.model("badges", BadgeModel);
+module.exports = badge = mongoose.model("badges", BadgeModel);

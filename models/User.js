@@ -65,7 +65,12 @@ const UserModel = mongoose.Schema({
   },
   badges: [
     {
-      type: ObjectId,
+      unlockedAt: {
+        type: Date,
+        required: true,
+        default: new Date(),
+      },
+      badge: { type: ObjectId, required: true },
     },
   ],
   featuredBadge: {
