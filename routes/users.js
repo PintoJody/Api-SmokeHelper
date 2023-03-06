@@ -187,7 +187,11 @@ router.post("/login", async (req, res) => {
       },
     },
     {
+      $set: { id: "$_id" },
+    },
+    {
       $project: {
+        id: 1,
         username: 1,
         slug: 1,
         email: 1,
