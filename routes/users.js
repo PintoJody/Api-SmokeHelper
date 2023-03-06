@@ -192,6 +192,7 @@ router.post("/login", async (req, res) => {
         slug: 1,
         email: 1,
         confirmed: 1,
+        confirmationToken: 1,
         role: 1,
         password: 1,
         badges: 1,
