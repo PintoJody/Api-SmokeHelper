@@ -9,6 +9,7 @@ const UserModel = require("../models/User");
 
 var slug = require("slug");
 const validator = require("validator");
+const nodemailer = require("nodemailer");
 
 // GENERATES A RANDOM TOKEN
 function makeToken(length) {
@@ -38,6 +39,14 @@ router.get("/:slug", async (req, res) => {
       $match: { slug: { $eq: req.params.slug } },
     },
     {
+      $lookup: {
+        from: "badges",
+        localField: "badges",
+        foreignField: "_id",
+        as: "badges",
+      },
+    },
+    {
       $project: {
         username: 1,
         badges: 1,
@@ -56,6 +65,16 @@ router.post("/register/step1", async (req, res) => {
   req.fields.confirmationToken = req.fields.slug + makeToken(30);
   const errors = {};
   let exists;
+  let transporter = nodemailer.createTransport({
+    // service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: "smokehelper1@gmail.com",
+      pass: process.env.NODEMAILER_PASS,
+    },
+  });
 
   // email verif
   if (!validator.isEmail(req.fields.email)) {
@@ -116,8 +135,29 @@ router.post("/register/step1", async (req, res) => {
     const newUser = new UserModel(req.fields);
     console.log(hash);
     newUser.save((err, docs) => {
-      if (!err) res.send(docs);
-      else res.status(400).send(err);
+      if (!err) {
+        const mailConfig = {
+          from: "SmokeHelper <smokehelper1@gmail.com>",
+          to: req.fields.email,
+          subject: "Confirmez votre adresse mail",
+          text: "Bonjour",
+          html:
+            "<p>Bonjour " +
+            req.fields.username +
+            ", veuillez copier le code ci-dessous pour confirmer votre adresse mail, puis vous connecter à votre compte. Il vous sera demandé d'entrer ce code lors de votre premiere connection.</p><span style='background-color: #55886F;padding: 5px;color: white;font-weight: bold'>" +
+            req.fields.confirmationToken +
+            "</span>",
+        };
+        transporter.sendMail(mailConfig, (err, info) => {
+          console.log(info);
+          if (err) {
+            console.log(err);
+          }
+        });
+        res.send(docs);
+      } else {
+        res.status(400).send(err);
+      }
     });
   });
 });
@@ -170,6 +210,30 @@ router.post("/login", async (req, res) => {
       }
     );
   } else res.status(400).send("Aucun utilisateur trouvé.");
+});
+
+router.post("/confirmMail/:token", async (req, res) => {
+  if (!req.fields.userId || !objectId.isValid(req.fields.userId)) {
+    res.status(400).send("Aucun utilisateur spécifié ou ID invalide.");
+  }
+  if (!req.params.token) {
+    res.status(400).send("Aucun token spécifié.");
+  }
+  const token = req.params.token;
+  const userId = objectId(req.fields.userId);
+  let userFound = await UserModel.findOneAndUpdate(
+    {
+      _id: userId,
+      banned: false,
+      confirmed: false,
+      confirmationToken: token,
+    },
+    { $set: { confirmed: true, confirmationToken: null } }
+  );
+  if (!userFound) {
+    res.status(400).send("Aucun utilisateur trouvé.");
+  }
+  res.status(200).send({ status: "success", data: userFound });
 });
 
 // update
