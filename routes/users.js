@@ -297,4 +297,5 @@ router.post("/addBadgeTo/:userId", async (req, res) => {
   );
   res.send(userFound);
 });
+
 module.exports = router;
